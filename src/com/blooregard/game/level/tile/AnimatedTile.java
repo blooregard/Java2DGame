@@ -20,7 +20,6 @@ public class AnimatedTile extends BasicTile {
 	
 	public void tick() {	
 		if((System.currentTimeMillis() - lastIterationTime) >= (animationSwitchDelay)) {
-			System.out.println(animationSwitchDelay);
 			lastIterationTime = System.currentTimeMillis();
 			currentAnimationIndex = ( currentAnimationIndex + 1 ) % animationTileCoords.length;
 			tileId = (animationTileCoords[currentAnimationIndex][0] + (animationTileCoords[currentAnimationIndex][1] * 32));

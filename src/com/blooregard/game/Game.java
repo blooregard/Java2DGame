@@ -9,13 +9,14 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 import com.blooregard.game.entities.Player;
-import com.blooregard.game.gfx.Colors;
-import com.blooregard.game.gfx.Font;
 import com.blooregard.game.gfx.Screen;
 import com.blooregard.game.gfx.SpriteSheet;
 import com.blooregard.game.level.Level;
+import com.blooregard.game.net.GameClient;
+import com.blooregard.game.net.GameServer;
 
 public class Game extends Canvas implements Runnable{
 
@@ -42,6 +43,9 @@ public class Game extends Canvas implements Runnable{
 	private InputHandler input;
 	public Level level;
 	public Player player;
+
+	private GameClient socketClient;
+	private GameServer socketServer;
 	
 	public Game() {
 		this.setMinimumSize(new Dimension (WIDTH* SCALE, HEIGHT * SCALE));
@@ -80,13 +84,23 @@ public class Game extends Canvas implements Runnable{
 		screen = new Screen(WIDTH, HEIGHT, new SpriteSheet("/sprite_sheet.png"));
 		input = new InputHandler(this);
 		level = new Level("/levels/water_test_level.png");
-		player = new Player(level, 0, 0, input);
+		player = new Player(level, 0, 24, input, JOptionPane.showInputDialog(this, "Please enter a username"));
 		level.addEntity(player);
+		socketClient.sendData("ping".getBytes());
 	}
 	
 	public synchronized void start() {
 		running = true;
 		new Thread(this).start();
+		
+		if (JOptionPane.showConfirmDialog(this, "Do you want to run the server") == 0) {
+			socketServer = new GameServer(this);
+			socketServer.start();
+			
+		}
+		
+		socketClient = new GameClient(this, "localhost");
+		socketClient.start();
 	}
 	
 	public synchronized void stop() {
