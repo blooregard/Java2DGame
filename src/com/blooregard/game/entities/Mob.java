@@ -1,7 +1,9 @@
 package com.blooregard.game.entities;
 
+import com.blooregard.game.Game;
 import com.blooregard.game.level.Level;
 import com.blooregard.game.level.tile.Tile;
+import com.blooregard.game.net.packets.Packet02Movement;
 
 public abstract class Mob extends Entity {
 
@@ -12,8 +14,8 @@ public abstract class Mob extends Entity {
 	protected int movingDir = 1; // 0=up, 1=down, 2=left, 3=right
 	protected int scale = 1;
 
-	public Mob(Level level, String name, int x, int y, int speed) {
-		super(level);
+	public Mob(Game game, Level level, String name, int x, int y, int speed) {
+		super(game, level);
 		this.name = name;
 		this.x = x;
 		this.y = y;
@@ -40,10 +42,21 @@ public abstract class Mob extends Entity {
 			x += xa * speed;
 			y += ya * speed;
 		}
+		
+		Packet02Movement packet = new Packet02Movement(this);
+		packet.writeData(this.game.socketClient);
 	}
 
 	public String getName() {
 		return name;
+	}
+	
+	public int getMovingDir() {
+		return this.movingDir;
+	}
+	
+	public void setMovingDir(int movingDir) {
+		this.movingDir = movingDir;
 	}
 
 	public abstract boolean hasCollided(int xa, int ya);

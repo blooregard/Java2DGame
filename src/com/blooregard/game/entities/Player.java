@@ -1,5 +1,6 @@
 package com.blooregard.game.entities;
 
+import com.blooregard.game.Game;
 import com.blooregard.game.InputHandler;
 import com.blooregard.game.gfx.Colors;
 import com.blooregard.game.gfx.Font;
@@ -18,8 +19,8 @@ public class Player extends Mob {
 
 	protected boolean isSwimming = false;
 
-	public Player(Level level, int x, int y, InputHandler input, String username) {
-		super(level, "Player", x, y, 1);
+	public Player(Game game, Level level, int x, int y, InputHandler input, String username) {
+		super(game, level, username, x, y, 1);
 		this.input = input;
 		this.username = username;
 	}
@@ -27,18 +28,19 @@ public class Player extends Mob {
 	public void tick() {
 		int xa = 0;
 		int ya = 0;
-
-		if (input.up.isPressed()) {
-			ya--;
-		}
-		if (input.down.isPressed()) {
-			ya++;
-		}
-		if (input.left.isPressed()) {
-			xa--;
-		}
-		if (input.right.isPressed()) {
-			xa++;
+		if (input != null) {
+			if (input.up.isPressed()) {
+				ya--;
+			}
+			if (input.down.isPressed()) {
+				ya++;
+			}
+			if (input.left.isPressed()) {
+				xa--;
+			}
+			if (input.right.isPressed()) {
+				xa++;
+			}
 		}
 
 		if (xa != 0 || ya != 0) {
@@ -60,14 +62,14 @@ public class Player extends Mob {
 	}
 
 	private void checkHealth() {
-		if (tickCount % 60 == 0) {
-			if (isSwimming) {
-				health -= 5;
-			} else {
-				if (health < 100)
-					health++;
-			}
-		}
+		// if (tickCount % 60 == 0) {
+		// if (isSwimming) {
+		// health -= 5;
+		// } else {
+		// if (health < 100)
+		// health++;
+		// }
+		// }
 
 	}
 
@@ -164,4 +166,35 @@ public class Player extends Mob {
 		return false;
 	}
 
+	public String getUsername() {
+		return this.username;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((username == null) ? 0 : username.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Player other = (Player) obj;
+		if (username == null) {
+			if (other.username != null)
+				return false;
+		} else if (!username.equals(other.username))
+			return false;
+		return true;
+	}
+	
+	
 }

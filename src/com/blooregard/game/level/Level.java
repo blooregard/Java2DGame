@@ -9,6 +9,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import com.blooregard.game.entities.Entity;
+import com.blooregard.game.entities.PlayerMP;
 import com.blooregard.game.gfx.Screen;
 import com.blooregard.game.level.tile.Tile;
 
@@ -60,6 +61,7 @@ public class Level {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private void saveLevelToFile() {
 		try {
 			ImageIO.write(image, "png",
@@ -132,6 +134,15 @@ public class Level {
 
 	public void addEntity(Entity entity) {
 		entities.add(entity);
+	}
+
+	public void removePlayerMP(String username) {
+		for (Entity e: entities) {
+			if(e instanceof PlayerMP && ((PlayerMP)e).getUsername().equals(username)) {
+				entities.remove(e);
+				break;
+			}
+		}
 	}
 
 }
