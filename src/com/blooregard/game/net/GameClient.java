@@ -61,12 +61,13 @@ public class GameClient extends Thread {
 			break;
 		case LOGIN:
 			packet = new Packet00Login(data);
-			System.out.println("[" + address.getHostAddress() + ":" + port
-					+ "] " + ((Packet00Login) packet).getPlayer().getUsername()
-					+ " has joined the game...");
 			Player skeleton = ((Packet00Login) packet).getPlayer();
-			PlayerMP player = new PlayerMP(game, game.level, skeleton.x, skeleton.y,
-					skeleton.getUsername(), address, port);
+			System.out
+					.println("[" + address.getHostAddress() + ":" + port + "] "
+							+ skeleton.getUsername()
+							+ " has joined the game...");
+			PlayerMP player = new PlayerMP(game, game.level, skeleton.x,
+					skeleton.y, skeleton.getUsername(), address, port);
 			player.setMovingDir(skeleton.getMovingDir());
 			game.level.addEntity(player);
 			break;
@@ -87,11 +88,14 @@ public class GameClient extends Thread {
 	}
 
 	private void moveMob(Mob mob) {
-		for (Entity e : game.level.entities) {
-			if (e instanceof Mob && ((Mob)e).getName().equalsIgnoreCase(mob.getName())) {	
-				e.x = mob.x;
-				e.y = mob.y;
-				((Mob)e).setMovingDir(mob.getMovingDir());
+		synchronized (game.level.entities) {
+			for (Entity e : game.level.entities) {
+				if (e instanceof Mob
+						&& ((Mob) e).getName().equalsIgnoreCase(mob.getName())) {
+					e.x = mob.x;
+					e.y = mob.y;
+					((Mob) e).setMovingDir(mob.getMovingDir());
+				}
 			}
 		}
 	}

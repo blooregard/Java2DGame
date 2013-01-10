@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.blooregard.game.Game;
+import com.blooregard.game.entities.Mob;
 import com.blooregard.game.entities.Player;
 import com.blooregard.game.entities.PlayerMP;
 import com.blooregard.game.net.packets.Packet;
@@ -69,8 +70,8 @@ public class GameServer extends Thread {
 					+ "] " + ((Packet00Login) packet).getPlayer().getUsername()
 					+ " has connected...");
 			Player skeleton = ((Packet00Login) packet).getPlayer();
-			PlayerMP player = new PlayerMP(game, game.level, skeleton.x, skeleton.y,
-					skeleton.getUsername(), address, port);
+			PlayerMP player = new PlayerMP(game, game.level, skeleton.x,
+					skeleton.y, skeleton.getUsername(), address, port);
 			player.setMovingDir(skeleton.getMovingDir());
 			this.addConnection(player, (Packet00Login) packet);
 			break;
@@ -84,26 +85,41 @@ public class GameServer extends Thread {
 		case MOVEMENT:
 			packet = new Packet02Movement(data);
 			packet.writeData(this);
+			Mob mob = ((Packet02Movement) packet).getMob();
+			this.moveMob(mob);
 			break;
+		}
+	}
+	
+	private synchronized void moveMob(Mob mob) {
+		for (PlayerMP p : this.connectedPlayers){
+			if (p.getUsername().equalsIgnoreCase(mob.getName())) {
+				p.x = mob.x;
+				p.y = mob.y;
+				p.setMovingDir(mob.getMovingDir());
+			}
 		}
 	}
 
 	public void addConnection(PlayerMP player, Packet00Login packet) {
 		boolean alreadyConnected = false;
-		for (PlayerMP p : this.connectedPlayers) {
-			if (player.getUsername().equalsIgnoreCase(p.getUsername())) {
-				if (p.ipAddress == null) {
-					p.ipAddress = player.ipAddress;
-				}
-				if (p.port == -1) {
-					p.port = player.port;
-				}
-				alreadyConnected = true;
-			} else {
-				sendData(packet.getData(), p.ipAddress, p.port);
+		synchronized (this.connectedPlayers) {
+			for (PlayerMP p : this.connectedPlayers) {
+				if (player.getUsername().equalsIgnoreCase(p.getUsername())) {
+					if (p.ipAddress == null) {
+						p.ipAddress = player.ipAddress;
+					}
+					if (p.port == -1) {
+						p.port = player.port;
+					}
+					alreadyConnected = true;
+				} else {
+					sendData(packet.getData(), p.ipAddress, p.port);
 
-				packet = new Packet00Login(p);
-				sendData(packet.getData(), player.ipAddress, player.port);
+					Packet otherGuyPacket = new Packet00Login(p);
+					sendData(otherGuyPacket.getData(), player.ipAddress,
+							player.port);
+				}
 			}
 		}
 		if (!alreadyConnected) {

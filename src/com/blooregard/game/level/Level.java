@@ -52,7 +52,8 @@ public class Level {
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
 				tileCheck: for (Tile t : Tile.tiles) {
-					if (t != null && t.getLevelColor() == tileColors[x + y * width]) {
+					if (t != null
+							&& t.getLevelColor() == tileColors[x + y * width]) {
 						this.tiles[x + y * width] = t.getId();
 						break tileCheck;
 					}
@@ -70,7 +71,7 @@ public class Level {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void alterTile(int x, int y, Tile newTile) {
 		this.tiles[x + y * width] = newTile.getId();
 		image.setRGB(x, y, newTile.getLevelColor());
@@ -89,12 +90,14 @@ public class Level {
 	}
 
 	public void tick() {
-		for (Entity e : entities) {
-			e.tick();
+		synchronized (entities) {
+			for (Entity e : entities) {
+				e.tick();
+			}
 		}
-		
+
 		for (Tile t : Tile.tiles) {
-			if( t == null) {
+			if (t == null) {
 				break;
 			}
 			t.tick();
@@ -121,8 +124,10 @@ public class Level {
 	}
 
 	public void renderEntities(Screen screen) {
-		for (Entity e : entities) {
-			e.render(screen);
+		synchronized (entities) {
+			for (Entity e : entities) {
+				e.render(screen);
+			}
 		}
 	}
 
@@ -132,15 +137,18 @@ public class Level {
 		return Tile.tiles[tiles[x + y * width]];
 	}
 
-	public void addEntity(Entity entity) {
+	public synchronized void addEntity(Entity entity) {
 		entities.add(entity);
 	}
 
 	public void removePlayerMP(String username) {
-		for (Entity e: entities) {
-			if(e instanceof PlayerMP && ((PlayerMP)e).getUsername().equals(username)) {
-				entities.remove(e);
-				break;
+		synchronized (entities) {
+			for (Entity e : entities) {
+				if (e instanceof PlayerMP
+						&& ((PlayerMP) e).getUsername().equals(username)) {
+					entities.remove(e);
+					break;
+				}
 			}
 		}
 	}
