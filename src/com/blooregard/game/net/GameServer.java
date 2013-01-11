@@ -17,12 +17,14 @@ import com.blooregard.game.net.packets.Packet.PacketTypes;
 import com.blooregard.game.net.packets.Packet00Login;
 import com.blooregard.game.net.packets.Packet01Disconnect;
 import com.blooregard.game.net.packets.Packet02Movement;
+import com.blooregard.game.net.packets.Packet03AddMob;
 
 public class GameServer extends Thread {
 
 	private DatagramSocket socket;
 	private Game game;
 	private List<PlayerMP> connectedPlayers = new ArrayList<PlayerMP>();
+	private List<Mob> connectedMobs = new ArrayList<Mob>();
 
 	public GameServer(Game game) {
 		this.game = game;
@@ -85,19 +87,17 @@ public class GameServer extends Thread {
 		case MOVEMENT:
 			packet = new Packet02Movement(data);
 			packet.writeData(this);
-			Mob mob = ((Packet02Movement) packet).getMob();
-			this.moveMob(mob);
+			break;
+		case ADD_MOB:
+			packet = new Packet03AddMob(data);
+			this.addMob(((Packet03AddMob) packet).getMob());
 			break;
 		}
 	}
 	
-	private synchronized void moveMob(Mob mob) {
-		for (PlayerMP p : this.connectedPlayers){
-			if (p.getUsername().equalsIgnoreCase(mob.getName())) {
-				p.x = mob.x;
-				p.y = mob.y;
-				p.setMovingDir(mob.getMovingDir());
-			}
+	public void addMob(Mob mob) {
+		synchronized (this.connectedMobs) {
+			this.connectedMobs.add(mob);
 		}
 	}
 
@@ -119,9 +119,19 @@ public class GameServer extends Thread {
 					Packet otherGuyPacket = new Packet00Login(p);
 					sendData(otherGuyPacket.getData(), player.ipAddress,
 							player.port);
+
+					synchronized (this.connectedMobs) {
+						for (Mob m : this.connectedMobs) {
+							Packet mobPacket = new Packet03AddMob(m);
+							sendData(mobPacket.getData(), player.ipAddress,
+									player.port);
+						}
+					}
+
 				}
 			}
 		}
+				
 		if (!alreadyConnected) {
 			this.connectedPlayers.add(player);
 		}

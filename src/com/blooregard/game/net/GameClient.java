@@ -17,6 +17,7 @@ import com.blooregard.game.net.packets.Packet.PacketTypes;
 import com.blooregard.game.net.packets.Packet00Login;
 import com.blooregard.game.net.packets.Packet01Disconnect;
 import com.blooregard.game.net.packets.Packet02Movement;
+import com.blooregard.game.net.packets.Packet03AddMob;
 
 public class GameClient extends Thread {
 
@@ -69,7 +70,7 @@ public class GameClient extends Thread {
 			PlayerMP player = new PlayerMP(game, game.level, skeleton.x,
 					skeleton.y, skeleton.getUsername(), address, port);
 			player.setMovingDir(skeleton.getMovingDir());
-			game.level.addEntity(player);
+			this.addEntity(player);
 			break;
 		case DISCONNECT:
 			packet = new Packet01Disconnect(data);
@@ -81,10 +82,20 @@ public class GameClient extends Thread {
 			break;
 		case MOVEMENT:
 			packet = new Packet02Movement(data);
-			Mob mob = ((Packet02Movement) packet).getMob();
-			this.moveMob(mob);
+			this.moveMob(((Packet02Movement) packet).getMob());
+			break;
+		case ADD_MOB:
+			packet = new Packet03AddMob(data);
+			this.addEntity(((Packet03AddMob) packet).getMob());
 			break;
 		}
+	}
+	
+	private void addEntity(Entity entity) {
+		synchronized (game.level.entities) {
+			System.out.println(entity.getClass());
+			game.level.entities.add(entity);
+		}	
 	}
 
 	private void moveMob(Mob mob) {
@@ -94,6 +105,7 @@ public class GameClient extends Thread {
 						&& ((Mob) e).getName().equalsIgnoreCase(mob.getName())) {
 					e.x = mob.x;
 					e.y = mob.y;
+					((Mob) e).numSteps++;
 					((Mob) e).setMovingDir(mob.getMovingDir());
 				}
 			}

@@ -16,12 +16,11 @@ public class Player extends Mob {
 	private int scale = 1;
 	private int tickCount = 0;
 	private String username;
-	private int health = 100;
 
 	protected boolean isSwimming = false;
 
 	public Player(Game game, Level level, int x, int y, InputHandler input, String username) {
-		super(game, level, username, x, y, 1);
+		super(game, level, MobTypes.PLAYER, username, x, y, 1);
 		this.input = input;
 		this.username = username;
 	}

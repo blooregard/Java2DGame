@@ -13,6 +13,7 @@ import javax.swing.JOptionPane;
 
 import com.blooregard.game.entities.Player;
 import com.blooregard.game.entities.PlayerMP;
+import com.blooregard.game.entities.mobs.Tonberry;
 import com.blooregard.game.gfx.Screen;
 import com.blooregard.game.gfx.SpriteSheet;
 import com.blooregard.game.level.Level;
@@ -89,12 +90,17 @@ public class Game extends Canvas implements Runnable {
 		player = new PlayerMP(this, level, 10, 100, input,
 				JOptionPane.showInputDialog(this, "Please enter a username"),
 				null, -1);
-		level.addEntity(player);
 		Packet00Login loginPacket = new Packet00Login(player);
 		if (socketServer != null) {
+			Tonberry tonberry = new Tonberry(this, level, 80, 300);
+			socketServer.addMob(tonberry);
+			level.addEntity(tonberry);
+			
 			socketServer.addConnection((PlayerMP) player, loginPacket);
 		}
 		loginPacket.writeData(socketClient);
+		
+		level.addEntity(player);
 	}
 
 	public synchronized void start() {

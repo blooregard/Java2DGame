@@ -1,7 +1,9 @@
 package com.blooregard.game.net.packets;
 
 import com.blooregard.game.entities.Mob;
+import com.blooregard.game.entities.Mob.MobTypes;
 import com.blooregard.game.entities.Player;
+import com.blooregard.game.entities.mobs.Tonberry;
 import com.blooregard.game.net.GameClient;
 import com.blooregard.game.net.GameServer;
 
@@ -32,9 +34,23 @@ public class Packet02Movement extends Packet {
 	@Override
 	public Object readData(byte[] data) {
 		String[] msgBody = new String(data).trim().split("\\|");
-		Mob mob = new Player(null, null, Integer.parseInt(msgBody[1]),
-				Integer.parseInt(msgBody[2]), null, msgBody[3]);
-		mob.setMovingDir(Integer.parseInt(msgBody[4]));
+		MobTypes type = Mob.lookupMob(msgBody[1]);
+		Mob mob = null;
+		switch (type) {
+		default:
+		case INVALID:
+			break;
+		case PLAYER:
+			mob = new Player(null, null, Integer.parseInt(msgBody[2]),
+				Integer.parseInt(msgBody[3]), null, msgBody[4]);
+			mob.setMovingDir(Integer.parseInt(msgBody[5]));
+			break;
+		case TONBERRY:
+			mob = new Tonberry(null, null, Integer.parseInt(msgBody[2]),
+				Integer.parseInt(msgBody[3]));
+			mob.setMovingDir(Integer.parseInt(msgBody[5]));
+			break;
+		}
 		return mob;
 	}
 
@@ -45,7 +61,7 @@ public class Packet02Movement extends Packet {
 
 	@Override
 	public byte[] getData() {
-		return ("02" + "|" + mob.x + "|" + mob.y + "|" + mob
+		return ("02" + "|" + mob.getType().getId() + "|" + mob.x + "|" + mob.y + "|" + mob
 				.getName()+ "|" + mob.getMovingDir()).getBytes();		
 	}
 

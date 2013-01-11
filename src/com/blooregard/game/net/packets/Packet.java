@@ -9,7 +9,8 @@ public abstract class Packet {
 		INVALID(-1),
 		LOGIN(00),
 		DISCONNECT(01),
-		MOVEMENT(02);
+		MOVEMENT(02),
+		ADD_MOB(03);
 		
 		private int packetId;
 		private PacketTypes(int packetId) {
