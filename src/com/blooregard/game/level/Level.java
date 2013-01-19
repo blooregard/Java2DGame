@@ -5,11 +5,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import javax.imageio.ImageIO;
 
 import com.blooregard.game.entities.Entity;
 import com.blooregard.game.entities.PlayerMP;
+import com.blooregard.game.entities.Projectile;
 import com.blooregard.game.gfx.Screen;
 import com.blooregard.game.level.tile.Tile;
 
@@ -19,6 +21,7 @@ public class Level {
 	public int width;
 	public int height;
 	public List<Entity> entities = new ArrayList<Entity>();
+	public List<Projectile> projectiles = new ArrayList<Projectile>();
 	private String imagePath;
 	private BufferedImage image;
 
@@ -96,6 +99,12 @@ public class Level {
 			}
 		}
 
+		synchronized (projectiles) {
+			for (Projectile p : this.projectiles) {
+				p.tick();
+			}
+		}
+
 		for (Tile t : Tile.tiles) {
 			if (t == null) {
 				break;
@@ -131,14 +140,30 @@ public class Level {
 		}
 	}
 
+	public void renderProjectiles(Screen screen) {
+		synchronized (this.projectiles) {
+			for (ListIterator<Projectile> i = this.projectiles.listIterator(); i
+					.hasNext();) {
+				Projectile p = i.next();
+				if (p.cleanUp) {
+					i.remove();
+				} else {
+					p.render(screen);
+				}
+			}
+		}
+	}
+
 	public Tile getTile(int x, int y) {
 		if (0 > x || x >= width || 0 > y || y >= height)
 			return Tile.VOID;
 		return Tile.tiles[tiles[x + y * width]];
 	}
 
-	public synchronized void addEntity(Entity entity) {
-		entities.add(entity);
+	public void addEntity(Entity entity) {
+		synchronized (entities) {
+			entities.add(entity);
+		}
 	}
 
 	public void removePlayerMP(String username) {
@@ -150,6 +175,12 @@ public class Level {
 					break;
 				}
 			}
+		}
+	}
+
+	public void removeProjectile(Projectile projectile) {
+		synchronized (this.projectiles) {
+			projectiles.remove(projectile);
 		}
 	}
 

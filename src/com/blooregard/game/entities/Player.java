@@ -1,7 +1,10 @@
 package com.blooregard.game.entities;
 
+import java.awt.Rectangle;
+
 import com.blooregard.game.Game;
 import com.blooregard.game.InputHandler;
+import com.blooregard.game.entities.projectiles.FireBall;
 import com.blooregard.game.gfx.Colors;
 import com.blooregard.game.gfx.Font;
 import com.blooregard.game.gfx.Screen;
@@ -12,15 +15,17 @@ public class Player extends Mob {
 
 	private InputHandler input;
 	private int color = Colors.get(-1, 111, 145, 543);
-	//private int color = Colors.get(-1, 111, 550, 543);
+	// private int color = Colors.get(-1, 111, 550, 543);
 	private int scale = 1;
 	private int tickCount = 0;
 	private String username;
+	private int xMin = 0, xMax = 7, yMin = 3, yMax = 7;
 
 	protected boolean isSwimming = false;
 
-	public Player(Game game, Level level, int x, int y, InputHandler input, String username) {
-		super(game, level, MobTypes.PLAYER, username, x, y, 1);
+	public Player(Game game, Level level, int x, int y, InputHandler input,
+			String username) {
+		super(game, level, MobTypes.PLAYER, username, x, y, 1, 100, 100);
 		this.input = input;
 		this.username = username;
 	}
@@ -40,6 +45,13 @@ public class Player extends Mob {
 			}
 			if (input.right.isPressed()) {
 				xa++;
+			}
+			if (input.fire.isPressed()) {
+				FireBall fb = new FireBall(game, level, this, this.movingDir, 2, 500);
+				if (System.currentTimeMillis() - this.lastFired >= fb.coolDown) {
+					this.lastFired = System.currentTimeMillis();
+					level.projectiles.add(fb);
+				}
 			}
 		}
 
@@ -131,17 +143,12 @@ public class Player extends Mob {
 			Font.render(username, screen, xOffset - nameOffset, yOffset - 10,
 					Colors.get(-1, -1, -1, 555), 1);
 		}
-
-		Font.render("Health: " + health + "%", screen, screen.xOffset,
-				screen.yOffset, Colors.get(-1, -1, -1, 550), 1);
+		
+		this.renderStatus(screen, xOffset, yOffset);
 
 	}
 
 	public boolean hasCollided(int xa, int ya) {
-		int xMin = 0;
-		int xMax = 7;
-		int yMin = 3;
-		int yMax = 7;
 
 		for (int x = xMin; x < xMax; x++) {
 			if (isSolidTile(xa, ya, x, yMin)) {
@@ -195,6 +202,11 @@ public class Player extends Mob {
 			return false;
 		return true;
 	}
-	
-	
+
+	@Override
+	public Rectangle getHitBox() {
+		return new Rectangle(x + xMin, y + yMin, xMax - xMin + 1, yMax - yMin
+				+ 1);
+	}
+
 }

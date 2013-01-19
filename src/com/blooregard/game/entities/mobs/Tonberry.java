@@ -1,5 +1,6 @@
 package com.blooregard.game.entities.mobs;
 
+import java.awt.Rectangle;
 import java.util.Random;
 
 import com.blooregard.game.Game;
@@ -15,17 +16,14 @@ public class Tonberry extends Mob {
 	private int color = Colors.get(-1, 111, 421, 040);
 	private int tickCount = 0;
 	private int xa = 0, ya = 0;
+	private int xMin = 0, xMax = 7, yMin = 3, yMax = 10;
 
 	public Tonberry(Game game, Level level, int x, int y) {
-		super(game, level, MobTypes.TONBERRY, "Tonberry", x, y, 1);
+		super(game, level, MobTypes.TONBERRY, "Tonberry", x, y, 1, 50, 50);
 	}
 
 	@Override
 	public boolean hasCollided(int xa, int ya) {
-		int xMin = 0;
-		int xMax = 7;
-		int yMin = 3;
-		int yMax = 10;
 
 		for (int x = xMin; x < xMax; x++) {
 			if (isSolidTile(xa, ya, x, yMin)) {
@@ -131,6 +129,14 @@ public class Tonberry extends Mob {
 			Font.render(name, screen, xOffset - nameOffset, yOffset - 10,
 					Colors.get(-1, -1, -1, 500), 1);
 		}
+		
+		this.renderStatus(screen, xOffset, yOffset);
+	}
+
+	@Override
+	public Rectangle getHitBox() {
+		return new Rectangle(x + xMin, y + yMin, xMax - xMin + 1, yMax - yMin
+				+ 1);
 	}
 
 }

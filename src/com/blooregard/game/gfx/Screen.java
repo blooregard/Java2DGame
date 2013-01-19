@@ -31,6 +31,27 @@ public class Screen {
 		render(xPos, yPos, tileIndex, color, 0x00, 1);
 	}
 	
+	public void render(int xPos, int yPos, int width, int height, int[] pixels, int scale) {
+		xPos -= xOffset;
+		yPos -= yOffset;
+		int scaleMap = scale - 1;
+		
+		for (int y = 0; y < height; y ++) {
+			int yPixel = y + yPos + (y * scaleMap) - ((scaleMap << 3) / 2);
+			if (yPixel < 0 || yPixel  >= this.height)
+				continue;
+			
+			for (int x = 0; x < width; x++) {
+				int xPixel = x + xPos + (x * scaleMap) - ((scaleMap << 3) / 2);
+				if (xPixel < 0 || xPixel >= this.width)
+					continue;
+				//System.out.println("Mod " + (xPixel + yPixel * this.width));
+				//System.out.println("Mod " + pixels[x + y * width]);
+				this.pixels[xPixel + yPixel * this.width] = pixels[x + y * width];
+			}
+		}
+	}
+	
 	public void render(int xPos, int yPos, int tileIndex, int color,
 			int mirrorDir, int scale) {
 		xPos -= xOffset;

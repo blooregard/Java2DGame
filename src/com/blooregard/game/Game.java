@@ -180,6 +180,7 @@ public class Game extends Canvas implements Runnable {
 		int yOffset = player.y - (screen.height / 2);
 
 		level.renderTiles(screen, xOffset, yOffset);
+		level.renderProjectiles(screen);
 		level.renderEntities(screen);
 
 		for (int y = 0; y < screen.height; y++) {
