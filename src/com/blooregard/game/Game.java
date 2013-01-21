@@ -14,6 +14,8 @@ import javax.swing.JOptionPane;
 
 import com.blooregard.game.entities.Player;
 import com.blooregard.game.entities.PlayerMP;
+import com.blooregard.game.entities.loot.Loot;
+import com.blooregard.game.entities.loot.LootTypes;
 import com.blooregard.game.entities.mobs.Tonberry;
 import com.blooregard.game.gfx.Screen;
 import com.blooregard.game.gfx.SpriteSheet;
@@ -102,6 +104,11 @@ public class Game extends Canvas implements Runnable {
 					80, 300);
 			socketServer.addMob(tonberry);
 			level.addEntity(tonberry);
+			
+			// TODO remove this later
+			LootTypes lt = LootTypes.get("MANA_POTION");
+			Loot mp = lt.get(this, level, 100, 200);
+			level.addEntity(mp);
 
 			socketServer.addConnection((PlayerMP) player, loginPacket);
 		}

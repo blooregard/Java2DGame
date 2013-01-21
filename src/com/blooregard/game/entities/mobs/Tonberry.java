@@ -21,7 +21,7 @@ public class Tonberry extends Mob {
 	private int xMin = 0, xMax = 7, yMin = 3, yMax = 10;
 
 	public Tonberry(Game game, Level level, UUID uuid, int x, int y) {
-		super(game, level, uuid, MobTypes.TONBERRY, "Tonberry", x, y, 1, 50, 50);
+		super(game, level, uuid, MobTypes.TONBERRY, "Tonberry", x, y, 1, 150, 50);
 	}
 
 	// Constructor used by the client
@@ -139,6 +139,7 @@ public class Tonberry extends Mob {
 		}
 
 		this.renderStatus(screen, xOffset, yOffset + 3);
+		this.renderDamage(screen, xOffset, yOffset + 10);
 	}
 
 	@Override

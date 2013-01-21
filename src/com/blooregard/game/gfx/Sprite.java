@@ -21,6 +21,10 @@ public class Sprite {
 	public static Sprite HOLYFIRE_DOWN = new Sprite("HOLYFIRE", 2, 24, 8, 8);
 	public static Sprite HOLYFIRE_LEFT = new Sprite("HOLYFIRE", 3, 24, 8, 8);
 	
+	public static Sprite MANA_POTION = new Sprite("MANA_POTION", 0, 21, 8, 8);
+	public static Sprite HEALTH_POTION = new Sprite("HEALTH_POTION", 0, 21, 8, 8);
+	public static Sprite BOTH_POTION = new Sprite("BOTH_POTION", 0, 21, 8, 8);
+	
 	public static Sprite SELECTOR_BG_LEFT = new Sprite("SELECTOR_BG_LEFT", 0,
 			11, 16, 16);
 	public static Sprite SELECTOR_BG_MID = new Sprite("SELECTOR_BG_MID", 1, 11,

@@ -1,11 +1,15 @@
 package com.blooregard.game.entities;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.blooregard.game.Game;
 import com.blooregard.game.entities.projectiles.Spell;
 import com.blooregard.game.entities.projectiles.SpellTypes;
 import com.blooregard.game.gfx.Colors;
+import com.blooregard.game.gfx.Font;
 import com.blooregard.game.gfx.Screen;
 import com.blooregard.game.level.Level;
 import com.blooregard.game.level.tile.Tile;
@@ -37,6 +41,7 @@ public abstract class Mob extends Entity {
 	protected int health, maxHealth;
 	protected int mana, maxMana;
 	protected long lastFired;
+	protected Map<Long, Integer> damageToShow = new ConcurrentHashMap<Long, Integer>();
 
 	public Mob(Game game, Level level, UUID uuid, MobTypes type, String name,
 			int x, int y, int speed, int health, int mana) {
@@ -90,6 +95,9 @@ public abstract class Mob extends Entity {
 
 	public void modifyHealth(int delta) {
 		this.health += delta;
+		if (delta < 0) {
+			damageToShow.put(System.currentTimeMillis(), delta);
+		}
 		if (this.health > this.maxHealth)
 			this.health = this.maxHealth;
 		checkHealth();
@@ -137,6 +145,24 @@ public abstract class Mob extends Entity {
 			}
 		}
 		screen.render(xOffset + 3, yOffset - 4, 10, 2, status, 1);
+	}
+	
+	protected void renderDamage(Screen screen, int xOffset, int yOffset) {
+		int idx = 0;
+		Iterator<Long> iter = this.damageToShow.keySet().iterator();
+		while (iter.hasNext()) {
+			Long id = iter.next();
+			Integer damage = this.damageToShow.get(id);
+			long diff = System.currentTimeMillis() - id.longValue();
+			if (diff >= 2000) {
+				iter.remove();
+			} else {
+				Font.render(damage.toString(), screen, xOffset, (int)(yOffset - diff/20),
+						Colors.get(-1, -1, -1, 500), 1);
+			}
+			idx++;
+		}
+		
 	}
 
 	protected boolean isSolidTile(int xa, int ya, int x, int y) {
