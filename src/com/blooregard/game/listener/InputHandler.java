@@ -1,7 +1,9 @@
-package com.blooregard.game;
+package com.blooregard.game.listener;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+
+import com.blooregard.game.Game;
 
 public class InputHandler implements KeyListener {
 

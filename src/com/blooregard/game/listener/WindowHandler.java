@@ -1,50 +1,52 @@
-package com.blooregard.game;
+package com.blooregard.game.listener;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import com.blooregard.game.Game;
 import com.blooregard.game.net.packets.Packet01Disconnect;
 
-public class WindowHandler implements WindowListener{
+public class WindowHandler implements WindowListener {
 
 	private final Game game;
-	
+
 	public WindowHandler(Game game) {
 		this.game = game;
 		this.game.frame.addWindowListener(this);
 	}
-	
+
 	@Override
 	public void windowOpened(WindowEvent event) {
 	}
 
 	@Override
 	public void windowClosing(WindowEvent event) {
-		Packet01Disconnect packet = new Packet01Disconnect(this.game.player.getUsername());
+		Packet01Disconnect packet = new Packet01Disconnect(
+				this.game.player.getUUID());
 		packet.writeData(this.game.socketClient);
 	}
 
 	@Override
-	public void windowClosed(WindowEvent event) {	
+	public void windowClosed(WindowEvent event) {
 	}
 
 	@Override
-	public void windowIconified(WindowEvent event) {	
+	public void windowIconified(WindowEvent event) {
 	}
 
 	@Override
 	public void windowDeiconified(WindowEvent event) {
-		
+
 	}
 
 	@Override
 	public void windowActivated(WindowEvent event) {
-		
+
 	}
 
 	@Override
 	public void windowDeactivated(WindowEvent event) {
-		
+
 	}
 
 }

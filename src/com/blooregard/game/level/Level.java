@@ -3,15 +3,16 @@ package com.blooregard.game.level;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.imageio.ImageIO;
 
 import com.blooregard.game.entities.Entity;
-import com.blooregard.game.entities.PlayerMP;
-import com.blooregard.game.entities.Projectile;
 import com.blooregard.game.gfx.Screen;
 import com.blooregard.game.level.tile.Tile;
 
@@ -20,8 +21,8 @@ public class Level {
 	private byte[] tiles;
 	public int width;
 	public int height;
-	public List<Entity> entities = new ArrayList<Entity>();
-	public List<Projectile> projectiles = new ArrayList<Projectile>();
+	private Map<UUID, Entity> entities = new ConcurrentHashMap<UUID, Entity>();
+	private List<UUID> clean = new CopyOnWriteArrayList<UUID>();
 	private String imagePath;
 	private BufferedImage image;
 
@@ -93,16 +94,9 @@ public class Level {
 	}
 
 	public void tick() {
-		synchronized (entities) {
-			for (Entity e : entities) {
-				e.tick();
-			}
-		}
-
-		synchronized (projectiles) {
-			for (Projectile p : this.projectiles) {
-				p.tick();
-			}
+		Iterator<Entity> iter = this.entities.values().iterator();
+		while (iter.hasNext()) {
+			iter.next().tick();
 		}
 
 		for (Tile t : Tile.tiles) {
@@ -133,23 +127,14 @@ public class Level {
 	}
 
 	public void renderEntities(Screen screen) {
-		synchronized (entities) {
-			for (Entity e : entities) {
+		Iterator<UUID> iter = this.entities.keySet().iterator();
+		while (iter.hasNext()) {
+			UUID id = iter.next();
+			Entity e = this.entities.get(id);
+			if (e.cleanUp) {
+				clean.add(id);
+			} else {
 				e.render(screen);
-			}
-		}
-	}
-
-	public void renderProjectiles(Screen screen) {
-		synchronized (this.projectiles) {
-			for (ListIterator<Projectile> i = this.projectiles.listIterator(); i
-					.hasNext();) {
-				Projectile p = i.next();
-				if (p.cleanUp) {
-					i.remove();
-				} else {
-					p.render(screen);
-				}
 			}
 		}
 	}
@@ -161,27 +146,22 @@ public class Level {
 	}
 
 	public void addEntity(Entity entity) {
-		synchronized (entities) {
-			entities.add(entity);
-		}
+		entities.put(entity.getUUID(), entity);
 	}
 
-	public void removePlayerMP(String username) {
-		synchronized (entities) {
-			for (Entity e : entities) {
-				if (e instanceof PlayerMP
-						&& ((PlayerMP) e).getUsername().equals(username)) {
-					entities.remove(e);
-					break;
-				}
-			}
-		}
+	public Map<UUID, Entity> getEntities() {
+		return this.entities;
 	}
 
-	public void removeProjectile(Projectile projectile) {
-		synchronized (this.projectiles) {
-			projectiles.remove(projectile);
-		}
+	public void removePlayerMP(UUID uuid) {
+		this.entities.remove(uuid);
 	}
 
+	public void cleanUp() {
+		Iterator<UUID> iter = this.clean.iterator();
+		while (iter.hasNext()) {
+			UUID id = iter.next();
+			this.entities.remove(id);
+		}
+	}
 }

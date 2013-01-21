@@ -7,8 +7,12 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.blooregard.game.Game;
+import com.blooregard.game.entities.Entity;
 import com.blooregard.game.entities.Mob;
 import com.blooregard.game.entities.Player;
 import com.blooregard.game.entities.PlayerMP;
@@ -23,8 +27,8 @@ public class GameServer extends Thread {
 
 	private DatagramSocket socket;
 	private Game game;
-	private List<PlayerMP> connectedPlayers = new ArrayList<PlayerMP>();
-	private List<Mob> connectedMobs = new ArrayList<Mob>();
+	private Map<UUID, PlayerMP> connectedPlayers = new ConcurrentHashMap<UUID, PlayerMP>();
+	private Map<UUID, Mob> connectedMobs = new ConcurrentHashMap<UUID, Mob>();
 
 	public GameServer(Game game) {
 		this.game = game;
@@ -69,18 +73,19 @@ public class GameServer extends Thread {
 		case LOGIN:
 			packet = new Packet00Login(data);
 			System.out.println("[" + address.getHostAddress() + ":" + port
-					+ "] " + ((Packet00Login) packet).getPlayer().getUsername()
+					+ "] " + ((Packet00Login) packet).getPlayer().getUUID()
 					+ " has connected...");
 			Player skeleton = ((Packet00Login) packet).getPlayer();
-			PlayerMP player = new PlayerMP(game, game.level, skeleton.x,
-					skeleton.y, skeleton.getUsername(), address, port);
+			PlayerMP player = new PlayerMP(game, game.level,
+					skeleton.getUUID(), skeleton.getName(), skeleton.x,
+					skeleton.y, address, port);
 			player.setMovingDir(skeleton.getMovingDir());
 			this.addConnection(player, (Packet00Login) packet);
 			break;
 		case DISCONNECT:
 			packet = new Packet01Disconnect(data);
 			System.out.println("[" + address.getHostAddress() + ":" + port
-					+ "] " + ((Packet01Disconnect) packet).getUsername()
+					+ "] " + ((Packet01Disconnect) packet).uuid
 					+ " has left...");
 			this.removeConnection((Packet01Disconnect) packet);
 			break;
@@ -94,62 +99,52 @@ public class GameServer extends Thread {
 			break;
 		}
 	}
-	
+
 	public void addMob(Mob mob) {
 		synchronized (this.connectedMobs) {
-			this.connectedMobs.add(mob);
+			this.connectedMobs.put(mob.getUUID(), mob);
 		}
 	}
 
 	public void addConnection(PlayerMP player, Packet00Login packet) {
 		boolean alreadyConnected = false;
-		synchronized (this.connectedPlayers) {
-			for (PlayerMP p : this.connectedPlayers) {
-				if (player.getUsername().equalsIgnoreCase(p.getUsername())) {
-					if (p.ipAddress == null) {
-						p.ipAddress = player.ipAddress;
-					}
-					if (p.port == -1) {
-						p.port = player.port;
-					}
-					alreadyConnected = true;
-				} else {
-					sendData(packet.getData(), p.ipAddress, p.port);
+		//TODO fix this
+		for (PlayerMP p : this.connectedPlayers.values()) {
+			if (player.getName().equalsIgnoreCase(p.getName())) {
+				if (p.ipAddress == null) {
+					p.ipAddress = player.ipAddress;
+				}
+				if (p.port == -1) {
+					p.port = player.port;
+				}
+				alreadyConnected = true;
+			} else {
+				sendData(packet.getData(), p.ipAddress, p.port);
 
-					Packet otherGuyPacket = new Packet00Login(p);
-					sendData(otherGuyPacket.getData(), player.ipAddress,
-							player.port);
+				Packet otherGuyPacket = new Packet00Login(p);
+				sendData(otherGuyPacket.getData(), player.ipAddress,
+						player.port);
 
-					synchronized (this.connectedMobs) {
-						for (Mob m : this.connectedMobs) {
-							Packet mobPacket = new Packet03AddMob(m);
-							sendData(mobPacket.getData(), player.ipAddress,
-									player.port);
-						}
-					}
-
+				for (Mob m : this.connectedMobs.values()) {
+					Packet mobPacket = new Packet03AddMob(m);
+					sendData(mobPacket.getData(), player.ipAddress, player.port);
 				}
 			}
 		}
-				
+
 		if (!alreadyConnected) {
-			this.connectedPlayers.add(player);
+			this.connectedPlayers.put(player.getUUID(), player);
 		}
 	}
 
 	public void removeConnection(Packet01Disconnect packet) {
-		Player player = getPlayerMP(packet.getUsername());
+		Player player = getPlayerMP(packet.uuid);
 		this.connectedPlayers.remove(player);
 		packet.writeData(this);
 	}
 
-	public PlayerMP getPlayerMP(String username) {
-		for (PlayerMP player : this.connectedPlayers) {
-			if (player.getUsername().equalsIgnoreCase(username)) {
-				return player;
-			}
-		}
-		return null;
+	public PlayerMP getPlayerMP(UUID uuid) {
+		return this.connectedPlayers.get(uuid);
 	}
 
 	public void sendData(byte[] data, InetAddress ipAddress, int port) {
@@ -163,7 +158,7 @@ public class GameServer extends Thread {
 	}
 
 	public void sendDataToAllClients(byte[] data) {
-		for (PlayerMP p : connectedPlayers) {
+		for (PlayerMP p : connectedPlayers.values()) {
 			sendData(data, p.ipAddress, p.port);
 		}
 	}

@@ -1,15 +1,15 @@
 package com.blooregard.game.entities;
 
 import java.awt.Rectangle;
+import java.util.UUID;
 
 import com.blooregard.game.Game;
-import com.blooregard.game.InputHandler;
-import com.blooregard.game.entities.projectiles.FireBall;
 import com.blooregard.game.gfx.Colors;
 import com.blooregard.game.gfx.Font;
 import com.blooregard.game.gfx.Screen;
 import com.blooregard.game.level.Level;
 import com.blooregard.game.level.tile.Tile;
+import com.blooregard.game.listener.InputHandler;
 
 public class Player extends Mob {
 
@@ -18,16 +18,21 @@ public class Player extends Mob {
 	// private int color = Colors.get(-1, 111, 550, 543);
 	private int scale = 1;
 	private int tickCount = 0;
-	private String username;
 	private int xMin = 0, xMax = 7, yMin = 3, yMax = 7;
 
 	protected boolean isSwimming = false;
 
-	public Player(Game game, Level level, int x, int y, InputHandler input,
-			String username) {
-		super(game, level, MobTypes.PLAYER, username, x, y, 1, 100, 100);
+	public Player(Game game, Level level, UUID uuid, String name, int x, int y,
+			InputHandler input) {
+		super(game, level, uuid, MobTypes.PLAYER, name, x, y, 1, 100, 100);
 		this.input = input;
-		this.username = username;
+	}
+	
+	// Constructor used by the client
+	public Player(Game game, Level level, UUID uuid, String name, int x, int y, int movingDir, int health, int mana){
+		super(game, level, uuid, MobTypes.PLAYER, name, x, y, 1, health, mana);
+		this.movingDir = movingDir;
+		this.input = null;
 	}
 
 	public void tick() {
@@ -46,13 +51,18 @@ public class Player extends Mob {
 			if (input.right.isPressed()) {
 				xa++;
 			}
-			if (input.fire.isPressed()) {
-				FireBall fb = new FireBall(game, level, this, this.movingDir, 2, 500);
-				if (System.currentTimeMillis() - this.lastFired >= fb.coolDown) {
-					this.lastFired = System.currentTimeMillis();
-					level.projectiles.add(fb);
-				}
-			}
+//			if (input.fire.isPressed()) {
+//				// TODO fix this
+//				Spell spell = new Icelance(this);
+//				if (System.currentTimeMillis() - this.lastFired >= spell.getCoolDown()) {
+//					this.lastFired = System.currentTimeMillis();
+//					if (spell.getManaCost() <= this.mana) {
+//						this.mana -= spell.getManaCost();
+//						Ball ball = new Ball(game, level, UUID.randomUUID(), spell, this.movingDir);
+//						level.addEntity(ball);
+//					}
+//				}
+//			}
 		}
 
 		if (xa != 0 || ya != 0) {
@@ -68,21 +78,13 @@ public class Player extends Mob {
 		} else {
 			isSwimming = false;
 		}
+		
+		if (tickCount % 30 == 0) {
+			this.modifyHealth(1);
+			this.modifyMana(1);
+		}
 
-		checkHealth();
 		tickCount++;
-	}
-
-	private void checkHealth() {
-		// if (tickCount % 60 == 0) {
-		// if (isSwimming) {
-		// health -= 5;
-		// } else {
-		// if (health < 100)
-		// health++;
-		// }
-		// }
-
 	}
 
 	public void render(Screen screen) {
@@ -137,13 +139,13 @@ public class Player extends Mob {
 					flipBottom, scale);
 		}
 
-		if (username != null) {
-			int nameOffset = ((username.length() - 1) / 2) * 8
-					- ((username.length() % 2) * 4);
-			Font.render(username, screen, xOffset - nameOffset, yOffset - 10,
+		if (name != null) {
+			int nameOffset = ((name.length() - 1) / 2) * 8
+					- ((name.length() % 2) * 4);
+			Font.render(name, screen, xOffset - nameOffset, yOffset - 12,
 					Colors.get(-1, -1, -1, 555), 1);
 		}
-		
+
 		this.renderStatus(screen, xOffset, yOffset);
 
 	}
@@ -171,36 +173,6 @@ public class Player extends Mob {
 			}
 		}
 		return false;
-	}
-
-	public String getUsername() {
-		return this.username;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((username == null) ? 0 : username.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Player other = (Player) obj;
-		if (username == null) {
-			if (other.username != null)
-				return false;
-		} else if (!username.equals(other.username))
-			return false;
-		return true;
 	}
 
 	@Override

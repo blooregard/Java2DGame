@@ -7,6 +7,7 @@ import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.util.UUID;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -17,6 +18,9 @@ import com.blooregard.game.entities.mobs.Tonberry;
 import com.blooregard.game.gfx.Screen;
 import com.blooregard.game.gfx.SpriteSheet;
 import com.blooregard.game.level.Level;
+import com.blooregard.game.listener.InputHandler;
+import com.blooregard.game.listener.MouseHandler;
+import com.blooregard.game.listener.WindowHandler;
 import com.blooregard.game.net.GameClient;
 import com.blooregard.game.net.GameServer;
 import com.blooregard.game.net.packets.Packet00Login;
@@ -25,7 +29,7 @@ public class Game extends Canvas implements Runnable {
 
 	private static final long serialVersionUID = 1L;
 
-	public static final int WIDTH = 160;
+	public static final int WIDTH = 300;
 	public static final int HEIGHT = WIDTH / 12 * 9;
 	public static final int SCALE = 3;
 	public static final String NAME = "Game";
@@ -44,6 +48,7 @@ public class Game extends Canvas implements Runnable {
 	private Screen screen;
 	public InputHandler input;
 	public WindowHandler windowHandler;
+	public MouseHandler mouseHandler;
 	public Level level;
 	public Player player;
 
@@ -59,8 +64,7 @@ public class Game extends Canvas implements Runnable {
 
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setLayout(new BorderLayout());
-
-		frame.add(this, BorderLayout.CENTER);
+		frame.add(this, BorderLayout.CENTER);		
 		frame.pack();
 
 		frame.setResizable(false);
@@ -86,20 +90,23 @@ public class Game extends Canvas implements Runnable {
 		screen = new Screen(WIDTH, HEIGHT, new SpriteSheet("/sprite_sheet.png"));
 		input = new InputHandler(this);
 		windowHandler = new WindowHandler(this);
-		level = new Level("/levels/water_test_level.png");
-		player = new PlayerMP(this, level, 10, 100, input,
+		mouseHandler = new MouseHandler(this);
+		level = new Level("/levels/Level1.png");
+		player = new PlayerMP(this, level, UUID.randomUUID(),
 				JOptionPane.showInputDialog(this, "Please enter a username"),
-				null, -1);
+				20, 100, input,	null, -1);
 		Packet00Login loginPacket = new Packet00Login(player);
 		if (socketServer != null) {
-			Tonberry tonberry = new Tonberry(this, level, 80, 300);
+			// TODO move this to the game loop and replace with mob generator
+			Tonberry tonberry = new Tonberry(this, level, UUID.randomUUID(),
+					80, 300);
 			socketServer.addMob(tonberry);
 			level.addEntity(tonberry);
-			
+
 			socketServer.addConnection((PlayerMP) player, loginPacket);
 		}
 		loginPacket.writeData(socketClient);
-		
+
 		level.addEntity(player);
 	}
 
@@ -180,8 +187,9 @@ public class Game extends Canvas implements Runnable {
 		int yOffset = player.y - (screen.height / 2);
 
 		level.renderTiles(screen, xOffset, yOffset);
-		level.renderProjectiles(screen);
 		level.renderEntities(screen);
+		level.cleanUp();
+		screen.renderHud();
 
 		for (int y = 0; y < screen.height; y++) {
 			for (int x = 0; x < screen.width; x++) {
@@ -200,6 +208,10 @@ public class Game extends Canvas implements Runnable {
 
 	public static void main(String[] args) {
 		new Game().start();
+	}
+
+	public void click(int x, int y) {
+		this.screen.onScreenClick(level, player, x / SCALE, y / SCALE);
 	}
 
 }

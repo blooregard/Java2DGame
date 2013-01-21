@@ -1,6 +1,10 @@
 package com.blooregard.game.entities;
 
+import java.util.UUID;
+
 import com.blooregard.game.Game;
+import com.blooregard.game.entities.projectiles.Spell;
+import com.blooregard.game.entities.projectiles.SpellTypes;
 import com.blooregard.game.gfx.Colors;
 import com.blooregard.game.gfx.Screen;
 import com.blooregard.game.level.Level;
@@ -22,7 +26,7 @@ public abstract class Mob extends Entity {
 			return mobId;
 		}
 	}
-
+	
 	protected MobTypes type;
 	protected String name;
 	protected int speed;
@@ -34,9 +38,9 @@ public abstract class Mob extends Entity {
 	protected int mana, maxMana;
 	protected long lastFired;
 
-	public Mob(Game game, Level level, MobTypes type, String name, int x,
-			int y, int speed, int health, int mana) {
-		super(game, level);
+	public Mob(Game game, Level level, UUID uuid, MobTypes type, String name,
+			int x, int y, int speed, int health, int mana) {
+		super(game, level, uuid);
 		this.type = type;
 		this.name = name;
 		this.x = x;
@@ -86,14 +90,27 @@ public abstract class Mob extends Entity {
 
 	public void modifyHealth(int delta) {
 		this.health += delta;
+		if (this.health > this.maxHealth)
+			this.health = this.maxHealth;
+		checkHealth();
 	}
 
 	public void modifyMana(int delta) {
 		this.mana += delta;
+		if (this.mana > this.maxMana)
+			mana = this.maxMana;
 	}
 
 	public void setMovingDir(int movingDir) {
 		this.movingDir = movingDir;
+	}
+
+	protected void checkHealth() {
+		if (this.health <= 0) {
+			// TODO create loot
+
+			this.cleanUp = true;
+		}
 	}
 
 	public abstract boolean hasCollided(int xa, int ya);
@@ -114,12 +131,12 @@ public abstract class Mob extends Entity {
 		}
 		for (int x = 0; x < 10; x++) {
 			if (x <= manaPercent) {
-				status[x +10] = blue;
+				status[x + 10] = blue;
 			} else {
 				status[x + 10] = empty;
 			}
 		}
-		screen.render(xOffset + 3, yOffset - 2, 10, 2, status, 1);
+		screen.render(xOffset + 3, yOffset - 4, 10, 2, status, 1);
 	}
 
 	protected boolean isSolidTile(int xa, int ya, int x, int y) {
@@ -150,5 +167,24 @@ public abstract class Mob extends Entity {
 			}
 		}
 		return MobTypes.INVALID;
+	}
+
+	@Override
+	public String getData() {
+		return (this.type.mobId + "|" + this.uuid + "|" + this.name + "|"
+				+ this.x + "|" + this.y + "|" + this.getMovingDir() + "|"
+				+ this.health + "|" + this.mana);
+	}
+	
+	public void cast(String spellType) {
+		SpellTypes type = SpellTypes.get(spellType);
+		Spell spell = type.get(game, level, this);
+		if (System.currentTimeMillis() - this.lastFired >= spell.getCoolDown()) {
+			this.lastFired = System.currentTimeMillis();
+			if (spell.getManaCost() <= this.mana) {
+				this.mana -= spell.getManaCost();
+				level.addEntity(spell);
+			}
+		}
 	}
 }

@@ -1,5 +1,7 @@
 package com.blooregard.game.net.packets;
 
+import java.util.UUID;
+
 import com.blooregard.game.entities.Player;
 import com.blooregard.game.net.GameClient;
 import com.blooregard.game.net.GameServer;
@@ -11,11 +13,13 @@ public class Packet00Login extends Packet {
 	public Packet00Login(byte[] data) {
 		super(00);
 		player = (Player) readData(data);
+		this.uuid = this.player.getUUID();
 	}
 
 	public Packet00Login(Player player) {
 		super(00);
 		this.player = player;
+		this.uuid = this.player.getUUID();
 	}
 
 	@Override
@@ -29,8 +33,7 @@ public class Packet00Login extends Packet {
 	}
 
 	public byte[] getData() {
-		return ("00" + "|" + player.x + "|" + player.y + "|" + player
-				.getUsername()+ "|" + player.getMovingDir()).getBytes();
+		return ("00" + "|" + player.getData()).getBytes();
 	}
 
 	public Player getPlayer() {
@@ -40,9 +43,11 @@ public class Packet00Login extends Packet {
 	@Override
 	public Object readData(byte[] data) {
 		String[] msgBody = new String(data).trim().split("\\|");
-		Player player = new Player(null, null, Integer.parseInt(msgBody[1]),
-				Integer.parseInt(msgBody[2]), null, msgBody[3]);
-		player.setMovingDir(Integer.parseInt(msgBody[4]));
+		//UUID, name, x, y, direction, health, mana
+		Player player = new Player(null, null, UUID.fromString(msgBody[2]),
+				msgBody[3], Integer.parseInt(msgBody[4]),
+				Integer.parseInt(msgBody[5]), Integer.parseInt(msgBody[6]),
+				Integer.parseInt(msgBody[7]), Integer.parseInt(msgBody[8]));
 		return player;
 	}
 

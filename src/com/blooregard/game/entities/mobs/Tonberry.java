@@ -2,9 +2,11 @@ package com.blooregard.game.entities.mobs;
 
 import java.awt.Rectangle;
 import java.util.Random;
+import java.util.UUID;
 
 import com.blooregard.game.Game;
 import com.blooregard.game.entities.Mob;
+import com.blooregard.game.entities.Mob.MobTypes;
 import com.blooregard.game.gfx.Colors;
 import com.blooregard.game.gfx.Font;
 import com.blooregard.game.gfx.Screen;
@@ -18,8 +20,14 @@ public class Tonberry extends Mob {
 	private int xa = 0, ya = 0;
 	private int xMin = 0, xMax = 7, yMin = 3, yMax = 10;
 
-	public Tonberry(Game game, Level level, int x, int y) {
-		super(game, level, MobTypes.TONBERRY, "Tonberry", x, y, 1, 50, 50);
+	public Tonberry(Game game, Level level, UUID uuid, int x, int y) {
+		super(game, level, uuid, MobTypes.TONBERRY, "Tonberry", x, y, 1, 50, 50);
+	}
+
+	// Constructor used by the client
+	public Tonberry(Game game, Level level, UUID uuid, String name, int x,
+			int y, int movingDir, int health, int mana) {
+		super(game, level, uuid, MobTypes.TONBERRY, name, x, y, 1, health, mana);
 	}
 
 	@Override
@@ -129,8 +137,8 @@ public class Tonberry extends Mob {
 			Font.render(name, screen, xOffset - nameOffset, yOffset - 10,
 					Colors.get(-1, -1, -1, 500), 1);
 		}
-		
-		this.renderStatus(screen, xOffset, yOffset);
+
+		this.renderStatus(screen, xOffset, yOffset + 3);
 	}
 
 	@Override

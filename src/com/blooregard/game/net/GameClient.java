@@ -63,22 +63,20 @@ public class GameClient extends Thread {
 		case LOGIN:
 			packet = new Packet00Login(data);
 			Player skeleton = ((Packet00Login) packet).getPlayer();
-			System.out
-					.println("[" + address.getHostAddress() + ":" + port + "] "
-							+ skeleton.getUsername()
-							+ " has joined the game...");
-			PlayerMP player = new PlayerMP(game, game.level, skeleton.x,
-					skeleton.y, skeleton.getUsername(), address, port);
+			System.out.println("[" + address.getHostAddress() + ":" + port
+					+ "] " + skeleton.getName() + " has joined the game...");
+			PlayerMP player = new PlayerMP(game, game.level,
+					skeleton.getUUID(), skeleton.getName(), skeleton.x,
+					skeleton.y, address, port);
 			player.setMovingDir(skeleton.getMovingDir());
 			this.addEntity(player);
 			break;
 		case DISCONNECT:
 			packet = new Packet01Disconnect(data);
 			System.out.println("[" + address.getHostAddress() + ":" + port
-					+ "] " + ((Packet01Disconnect) packet).getUsername()
+					+ "] " + ((Packet01Disconnect) packet).uuid
 					+ " has left the world...");
-			game.level.removePlayerMP(((Packet01Disconnect) packet)
-					.getUsername());
+			game.level.removePlayerMP(packet.uuid);
 			break;
 		case MOVEMENT:
 			packet = new Packet02Movement(data);
@@ -90,25 +88,19 @@ public class GameClient extends Thread {
 			break;
 		}
 	}
-	
+
 	private void addEntity(Entity entity) {
-		synchronized (game.level.entities) {
-			System.out.println(entity.getClass());
-			game.level.entities.add(entity);
-		}	
+		game.level.addEntity(entity);
 	}
 
 	private void moveMob(Mob mob) {
-		synchronized (game.level.entities) {
-			for (Entity e : game.level.entities) {
-				if (e instanceof Mob
-						&& ((Mob) e).getName().equalsIgnoreCase(mob.getName())) {
-					e.x = mob.x;
-					e.y = mob.y;
-					((Mob) e).numSteps++;
-					((Mob) e).setMovingDir(mob.getMovingDir());
-				}
-			}
+		Entity e = game.level.getEntities().get(mob.getUUID());
+		if (e instanceof Mob
+				&& ((Mob) e).getName().equalsIgnoreCase(mob.getName())) {
+			e.x = mob.x;
+			e.y = mob.y;
+			((Mob) e).numSteps++;
+			((Mob) e).setMovingDir(mob.getMovingDir());
 		}
 	}
 
