@@ -1,12 +1,15 @@
 package com.blooregard.game.entities.mobs;
 
 import java.awt.Rectangle;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
 import com.blooregard.game.Game;
+import com.blooregard.game.entities.Entity;
 import com.blooregard.game.entities.Mob;
 import com.blooregard.game.entities.Mob.MobTypes;
+import com.blooregard.game.entities.Player;
 import com.blooregard.game.gfx.Colors;
 import com.blooregard.game.gfx.Font;
 import com.blooregard.game.gfx.Screen;
@@ -21,7 +24,8 @@ public class Tonberry extends Mob {
 	private int xMin = 0, xMax = 7, yMin = 3, yMax = 10;
 
 	public Tonberry(Game game, Level level, UUID uuid, int x, int y) {
-		super(game, level, uuid, MobTypes.TONBERRY, "Tonberry", x, y, 1, 150, 50);
+		super(game, level, uuid, MobTypes.TONBERRY, "Tonberry", x, y, 1, 150,
+				50);
 	}
 
 	// Constructor used by the client
@@ -58,8 +62,21 @@ public class Tonberry extends Mob {
 
 	@Override
 	public void tick() {
-
-		// Only update is this is the game server
+		if (tickCount % 3 == 0) {
+			Map<UUID, Entity> entities = level.getEntities();
+			for (Entity e : entities.values()) {
+				if (e instanceof Player) {
+					Player p = (Player)e;
+					if (this.distanceApart(p) < 20) {
+						System.out.println("Following " + p.getName());
+						this.pathfinding(p);
+					}
+				}
+			}
+		}
+		tickCount++;
+		
+		/* Only update if this is the game server
 		if (this.game != null) {
 			if (tickCount % 180 == 0) {
 				xa = random.nextInt(3) - 1;
@@ -74,7 +91,7 @@ public class Tonberry extends Mob {
 			}
 
 			tickCount++;
-		}
+		}*/
 	}
 
 	@Override
