@@ -1,5 +1,6 @@
 package com.blooregard.game.entities;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -31,6 +32,55 @@ public abstract class Mob extends Entity {
 		}
 	}
 	
+	public class Coordinate {
+		private int x, y;
+		
+		public Coordinate (int x, int y) {
+			this.x = x;
+			this.y = y;
+		}
+		
+		public int getX() {
+			return x;
+		}
+		
+		public int getY() {
+			return y;
+		}
+		
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + x;
+			result = prime * result + y;
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Coordinate other = (Coordinate) obj;
+			if (!getOuterType().equals(other.getOuterType()))
+				return false;
+			if (x != other.x)
+				return false;
+			if (y != other.y)
+				return false;
+			return true;
+		}
+
+		private Mob getOuterType() {
+			return Mob.this;
+		}	
+	}
+
 	protected MobTypes type;
 	protected String name;
 	protected int speed;
@@ -146,7 +196,7 @@ public abstract class Mob extends Entity {
 		}
 		screen.render(xOffset + 3, yOffset - 4, 10, 2, status, 1);
 	}
-	
+
 	protected void renderDamage(Screen screen, int xOffset, int yOffset) {
 		int idx = 0;
 		Iterator<Long> iter = this.damageToShow.keySet().iterator();
@@ -157,12 +207,13 @@ public abstract class Mob extends Entity {
 			if (diff >= 2000) {
 				iter.remove();
 			} else {
-				Font.render(damage.toString(), screen, xOffset, (int)(yOffset - diff/20),
+				Font.render(damage.toString(), screen, xOffset,
+						(int) (yOffset - diff / 20),
 						Colors.get(-1, -1, -1, 500), 1);
 			}
 			idx++;
 		}
-		
+
 	}
 
 	protected boolean isSolidTile(int xa, int ya, int x, int y) {
@@ -176,6 +227,95 @@ public abstract class Mob extends Entity {
 			return true;
 		}
 		return false;
+	}
+
+	// Tiles apart
+	protected double distanceApart(Mob other) {
+		int x = Math.abs((this.x >> 3) - (other.x >> 3));
+		int y = Math.abs((this.y >> 3) - (other.y >> 3));
+		return Math.sqrt(x * x + y * y);
+	}
+	
+	protected void pathfinding(Mob other) {
+		boolean found = false;
+		int x, y, xa, ya, step =0 ;
+		Coordinate location = new Coordinate(this.x >> 3, this.y >> 3);
+		Map<Coordinate, Integer> path = new HashMap<Coordinate, Integer>();
+		
+		// Add first coordinate
+		x = other.x >> 3;
+		y = other.y >> 3;
+		path.put(new Coordinate(x,y), step);
+		
+		while(!found) {
+			step++;
+			Map<Coordinate, Integer> path1 = new HashMap<Coordinate, Integer>(path);
+			Iterator<Coordinate> iter = path1.keySet().iterator();
+			
+			while( iter.hasNext()) {
+				Coordinate c = iter.next();
+				if (!level.getTile(c.x-1, c.y).isSolid()) {
+					Coordinate c1 = new Coordinate(c.x-1, c.y);
+					if (!path.containsKey(c1))
+						path.put(c1, step);
+				}
+				if (!level.getTile(c.x-1, c.y-1).isSolid()) {
+					Coordinate c1 = new Coordinate(c.x-1, c.y-1);
+					if (!path.containsKey(c1))
+						path.put(c1, step);
+				}
+				if (!level.getTile(c.x+1, c.y).isSolid()) {
+					Coordinate c1 = new Coordinate(c.x+1, c.y);
+					if (!path.containsKey(c1))
+						path.put(c1, step);
+				}
+				if (!level.getTile(c.x+1, c.y+1).isSolid()) {
+					Coordinate c1 = new Coordinate(c.x+1, c.y+1);
+					if (!path.containsKey(c1))
+						path.put(c1, step);
+				}
+			}
+			found = path.containsKey(location);
+		}
+		
+		Coordinate m = location;
+		while ( step > 0) {
+		
+			Coordinate c1 = new Coordinate(m.x-1, m.y);
+			if (path.containsKey(c1)) {
+				if (path.get(c1) < step) {
+					move(-1, 0);
+					m = c1;
+				}
+			}
+			
+			Coordinate c2 = new Coordinate(m.x-1, m.y-1);
+			if (path.containsKey(c2)) {
+				if (path.get(c2) < step) {
+					move(-1, -1);
+					m = c2;
+				}
+			}
+			
+			Coordinate c3 = new Coordinate(m.x+1, m.y);
+			if (path.containsKey(c3)) {
+				if (path.get(c3) < step) {
+					move(1, 0);
+					m = c3;
+				}
+			}
+			
+			Coordinate c4 = new Coordinate(m.x+1, m.y+1);
+			if (path.containsKey(c4)) {
+				if (path.get(c4) < step) {
+					move(1, 1);
+					m = c4;
+				}
+			}
+
+			break;
+		}
+		
 	}
 
 	public static MobTypes lookupMob(String id) {
@@ -201,7 +341,7 @@ public abstract class Mob extends Entity {
 				+ this.x + "|" + this.y + "|" + this.getMovingDir() + "|"
 				+ this.health + "|" + this.mana);
 	}
-	
+
 	public void cast(String spellType) {
 		SpellTypes type = SpellTypes.get(spellType);
 		Spell spell = type.get(game, level, this);
@@ -213,4 +353,5 @@ public abstract class Mob extends Entity {
 			}
 		}
 	}
+
 }
